@@ -6,7 +6,7 @@ const Navbar = () => {
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
             <div className="container">
-                <Link className="navbar-brand" to="/">Job Scheduler</Link>
+                <Link className="navbar-brand" to="/">Rebalance Job Scheduler</Link>
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span className="navbar-toggler-icon"></span>
                 </button>

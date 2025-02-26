@@ -131,7 +131,7 @@ const CalendarView = () => {
     return (
         <div>
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <h2>Job Schedule Calendar</h2>
+                <h2>Rebalance Calendar - Dallas</h2>
                 <div className="d-flex gap-2">
                     <Button variant="success" onClick={() => setCreateModalOpen(true)}>
                         Add New Job
