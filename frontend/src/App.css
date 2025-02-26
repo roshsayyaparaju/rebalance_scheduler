@@ -1,0 +1,63 @@
+/* frontend/src/App.css */
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  flex: 1;
+}
+
+.rbc-calendar {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  padding: 10px;
+}
+
+.rbc-toolbar button {
+  color: #495057;
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.rbc-header {
+  background-color: #f8f9fa;
+  padding: 10px 5px;
+  font-weight: bold;
+}
+
+.rbc-event {
+  border-radius: 4px;
+}
+
+.rbc-event-label {
+  font-size: 0.85em;
+}
+
+.rbc-day-slot .rbc-event {
+  border: none;
+}
+
+.rbc-month-view {
+  border-radius: 8px;
+}
+
+.rbc-row-content {
+  z-index: 1;
+}
+
+/* Custom styling for modals */
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
