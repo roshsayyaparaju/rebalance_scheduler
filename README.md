@@ -6,9 +6,13 @@ A team job scheduler application built with Django (backend) and React (frontend
 
 - Calendar view showing scheduled jobs with month/week/day views
 - Job creation and management
-- Team member assignment
+- Team member assignment and task sign-off tracking
 - Index management
 - Color-coded job visualization
+- Daily task management with sign-off capabilities
+- History tracking for task sign-offs
+- Task organization by company and time of day
+- Excel task import functionality
 
 ## Setup Instructions
 
@@ -45,14 +49,26 @@ A team job scheduler application built with Django (backend) and React (frontend
    pip install -r requirements.txt
    ```
 
-4. Run database migrations:
+4. Install the additional packages for Excel processing:
+
+   ```bash
+   pip install pandas openpyxl
+   ```
+
+5. Run database migrations:
 
    ```bash
    python manage.py makemigrations scheduler
    python manage.py migrate
    ```
 
-5. (Optional) Load sample data:
+6. Import task data from the Runbook Excel file:
+
+   ```bash
+   python import_tasks.py
+   ```
+
+7. (Optional) Load sample data:
 
    ```bash
    # For general sample data over the next 30 days
@@ -62,7 +78,7 @@ A team job scheduler application built with Django (backend) and React (frontend
    python this_week_data.py
    ```
 
-6. Start the Django development server:
+8. Start the Django development server:
    ```bash
    python manage.py runserver
    ```
@@ -119,6 +135,15 @@ A team job scheduler application built with Django (backend) and React (frontend
 
 Use the respective tabs in the navigation bar to add, edit, or delete team members and indexes.
 
+### Managing Daily Tasks
+
+1. Navigate to the Tasks tab in the navigation menu
+2. View tasks organized by company and time of day
+3. Use the time slot tabs to switch between different times of day
+4. Click "Sign Off" on completed task groups
+5. When signing off, confirm you've completed all subtasks for that group
+6. View recent sign-offs in the history panel on the right
+
 ## Project Structure
 
 ```
@@ -139,9 +164,32 @@ job_scheduler/
 │   └── ...
 ├── manage.py             # Django management script
 ├── requirements.txt      # Python dependencies
+├── import_tasks.py       # Script to import tasks from Excel
 ├── load_sample_data.py   # Script to load sample data
 └── this_week_data.py     # Script to load data for current week
 ```
+
+## Admin Features
+
+The Django admin interface provides robust management for all task-related data:
+
+1. Access at http://localhost:8000/admin/
+2. Manage companies, time slots, task groups, and individual tasks
+3. View task sign-off history and team member activities
+4. Modify task configurations as needed
+
+## API Endpoints
+
+The backend provides RESTful API endpoints for all features:
+
+- `/api/indexes/` - Manage calculation indexes
+- `/api/team-members/` - Team member management
+- `/api/jobs/` - Job scheduling
+- `/api/companies/` - Companies for task organization
+- `/api/time-slots/` - Time slots (Morning, Afternoon, etc.)
+- `/api/task-groups/` - Task groupings
+- `/api/tasks/` - Individual tasks
+- `/api/task-signoffs/` - Sign-off history
 
 ## Creating requirements.txt
 
@@ -161,6 +209,7 @@ pip freeze > requirements.txt
 - CORS is enabled in development mode for all origins (restrict this in production)
 - The frontend uses react-big-calendar for the calendar view
 - Sample data scripts can be modified to create custom job patterns
+- Task data is initially imported from an Excel file but can be managed through the admin interface afterward
 
 ## Troubleshooting
 
