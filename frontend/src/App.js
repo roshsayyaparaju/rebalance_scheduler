@@ -1,10 +1,11 @@
 // frontend/src/App.js
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import CalendarView from './components/CalendarView';
 import TeamMembers from './components/TeamMembers';
 import Indexes from './components/Indexes';
+import TaskDashboard from './components/TaskDashboard';
 import './App.css';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         <div className="container mt-4">
           <Routes>
             <Route path="/" element={<CalendarView />} />
+            <Route path="/tasks" element={<TaskDashboard />} />
             <Route path="/team" element={<TeamMembers />} />
             <Route path="/indexes" element={<Indexes />} />
           </Routes>

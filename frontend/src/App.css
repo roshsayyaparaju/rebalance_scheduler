@@ -61,3 +61,125 @@
   background-color: #f8f9fa;
   border-top: 1px solid #dee2e6;
 }
+
+/* Task Dashboard Styling */
+.task-groups .card-header {
+  padding: 0.75rem 1rem;
+}
+
+.task-groups .list-group-item {
+  padding: 0.5rem 0;
+}
+
+.history-list {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.history-item {
+  padding: 10px 0;
+}
+
+.history-item:last-child {
+  border-bottom: none !important;
+}
+
+/* Time slot tabs styling */
+.nav-tabs .nav-link {
+  color: #495057;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+  color: #0d6efd;
+  border-color: #dee2e6 #dee2e6 #fff;
+  background-color: #fff;
+  font-weight: 600;
+}
+
+/* Badge styling */
+.badge {
+  font-weight: 500;
+  padding: 0.5em 0.75em;
+}
+
+.badge.bg-success {
+  background-color: #198754 !important;
+}
+
+.badge.bg-info {
+  background-color: #0dcaf0 !important;
+  color: #000;
+}
+
+/* Task group cards styling */
+.card {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  font-weight: 500;
+}
+
+/* Date navigation styling */
+.date-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.date-navigation h4 {
+  margin: 0 1rem;
+  min-width: 280px;
+  text-align: center;
+}
+
+/* Spinner styling */
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+/* Task lists */
+.task-list {
+  margin-bottom: 0;
+}
+
+.task-list li {
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.task-list li:before {
+  content: "•";
+  position: absolute;
+  left: 0.5rem;
+  color: #0d6efd;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .task-groups .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .task-groups .card-header div:last-child {
+    margin-top: 0.5rem;
+  }
+  
+  .history-list {
+    max-height: 300px;
+  }
+}

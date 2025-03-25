@@ -1,0 +1,2340 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+backend/
+  asgi.py
+  load_sample_data.py
+  settings.py
+  urls.py
+  wsgi.py
+frontend/
+  public/
+    index.html
+    manifest.json
+    robots.txt
+  src/
+    components/
+      CalendarView.js
+      CreateJobModal.js
+      Indexes.js
+      JobModal.js
+      Navbar.js
+      TeamMembers.js
+    App.css
+    App.js
+    App.test.js
+    index.css
+    index.js
+    logo.svg
+    reportWebVitals.js
+    setupTests.js
+  .gitignore
+  package.json
+  README.md
+scheduler/
+  migrations/
+    0001_initial.py
+  admin.py
+  apps.py
+  models.py
+  serializers.py
+  tests.py
+  urls.py
+  views.py
+.gitignore
+load_sample_data.py
+manage.py
+README.md
+requirements.txt
+this_week_data.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="backend/asgi.py">
+"""
+ASGI config for backend project.
+
+It exposes the ASGI callable as a module-level variable named ``application``.
+
+For more information on this file, see
+https://docs.djangoproject.com/en/4.2/howto/deployment/asgi/
+"""
+
+import os
+
+from django.core.asgi import get_asgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+
+application = get_asgi_application()
+</file>
+
+<file path="backend/load_sample_data.py">
+# load_sample_data.py - place this file in the project root directory (same level as manage.py)
+import os
+import django
+from datetime import datetime, timedelta
+import random
+
+# Set up Django environment
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+django.setup()
+
+from django.contrib.auth.models import User
+from scheduler.models import Index, TeamMember, Job
+
+def create_sample_data():
+    # Create superuser for admin access
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser('admin', 'admin@example.com', 'adminpassword')
+        print("Created admin user")
+    
+    # Create indexes
+    indexes = [
+        {"name": "Market Index", "description": "Weekly market performance index calculation"},
+        {"name": "Customer Satisfaction", "description": "Monthly customer satisfaction index"},
+        {"name": "Product Quality", "description": "Weekly product quality metrics"},
+        {"name": "Supply Chain", "description": "Bi-weekly supply chain efficiency index"},
+        {"name": "Employee Engagement", "description": "Quarterly employee engagement metrics"}
+    ]
+    
+    for index_data in indexes:
+        Index.objects.get_or_create(
+            name=index_data["name"],
+            defaults={"description": index_data["description"]}
+        )
+    
+    # Create team members
+    team_members = [
+        {"name": "John Doe", "email": "john@example.com"},
+        {"name": "Jane Smith", "email": "jane@example.com"},
+        {"name": "Michael Johnson", "email": "michael@example.com"},
+        {"name": "Sarah Williams", "email": "sarah@example.com"},
+        {"name": "Robert Brown", "email": "robert@example.com"}
+    ]
+    
+    for member_data in team_members:
+        TeamMember.objects.get_or_create(
+            email=member_data["email"],
+            defaults={"name": member_data["name"]}
+        )
+    
+    # Get created objects
+    all_indexes = list(Index.objects.all())
+    all_members = list(TeamMember.objects.all())
+    
+    # Define colors for different indexes
+    colors = ['#3174ad', '#ff6b6b', '#5cb85c', '#f0ad4e', '#9467bd']
+    
+    # Create jobs for the next 30 days
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    job_count = 0
+    
+    # Delete existing jobs to avoid duplication when running script multiple times
+    Job.objects.all().delete()
+    
+    for day in range(30):
+        current_date = today + timedelta(days=day)
+        
+        # Weekly indexes on Mondays
+        if current_date.weekday() == 0:  # Monday
+            for i, index in enumerate([all_indexes[0], all_indexes[2]]):
+                start = current_date + timedelta(hours=9 + i*2)
+                end = start + timedelta(hours=2)
+                
+                Job.objects.create(
+                    index=index,
+                    title=f"{index.name} Calculation",
+                    start_time=start,
+                    end_time=end,
+                    assigned_to=random.choice(all_members) if random.random() > 0.3 else None,
+                    color=colors[i % len(colors)],
+                    notes=f"Regular weekly calculation for {index.name}"
+                )
+                job_count += 1
+        
+        # Bi-weekly supply chain index (every other Thursday)
+        if current_date.weekday() == 3 and (day // 7) % 2 == 0:  # Thursday, every other week
+            start = current_date + timedelta(hours=13)
+            end = start + timedelta(hours=3)
+            
+            Job.objects.create(
+                index=all_indexes[3],
+                title=f"{all_indexes[3].name} Analysis",
+                start_time=start,
+                end_time=end,
+                assigned_to=random.choice(all_members) if random.random() > 0.3 else None,
+                color=colors[3 % len(colors)],
+                notes=f"Bi-weekly analysis for {all_indexes[3].name}"
+            )
+            job_count += 1
+        
+        # Monthly customer satisfaction index (1st of month)
+        if current_date.day == 1:
+            start = current_date + timedelta(hours=10)
+            end = start + timedelta(hours=4)
+            
+            Job.objects.create(
+                index=all_indexes[1],
+                title=f"Monthly {all_indexes[1].name} Review",
+                start_time=start,
+                end_time=end,
+                assigned_to=random.choice(all_members) if random.random() > 0.3 else None,
+                color=colors[1 % len(colors)],
+                notes=f"Monthly review for {all_indexes[1].name}"
+            )
+            job_count += 1
+        
+        # Quarterly employee engagement (first Monday of quarter)
+        if current_date.day <= 7 and current_date.weekday() == 0 and current_date.month in [1, 4, 7, 10]:
+            start = current_date + timedelta(hours=14)
+            end = start + timedelta(hours=3)
+            
+            Job.objects.create(
+                index=all_indexes[4],
+                title=f"Quarterly {all_indexes[4].name}",
+                start_time=start,
+                end_time=end,
+                assigned_to=random.choice(all_members) if random.random() > 0.3 else None,
+                color=colors[4 % len(colors)],
+                notes=f"Quarterly analysis for {all_indexes[4].name}"
+            )
+            job_count += 1
+    
+    print(f"Created {len(indexes)} indexes, {len(team_members)} team members, and {job_count} jobs")
+
+if __name__ == "__main__":
+    create_sample_data()
+</file>
+
+<file path="backend/settings.py">
+# backend/settings.py
+import os
+from pathlib import Path
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure-your-secret-key-here'
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
+
+ALLOWED_HOSTS = []
+
+# Application definition
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'corsheaders',
+    'scheduler',
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'backend.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'backend.wsgi.application'
+
+# Database
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+# Password validation
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+# Internationalization
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = 'static/'
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = True  # For development only, restrict in production
+
+# REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # For development, use more restrictive permissions in production
+    ]
+}
+</file>
+
+<file path="backend/urls.py">
+# backend/urls.py
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/', include('scheduler.urls')),
+]
+</file>
+
+<file path="backend/wsgi.py">
+"""
+WSGI config for backend project.
+
+It exposes the WSGI callable as a module-level variable named ``application``.
+
+For more information on this file, see
+https://docs.djangoproject.com/en/4.2/howto/deployment/wsgi/
+"""
+
+import os
+
+from django.core.wsgi import get_wsgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+
+application = get_wsgi_application()
+</file>
+
+<file path="frontend/public/manifest.json">
+{
+  "short_name": "React App",
+  "name": "Create React App Sample",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
+</file>
+
+<file path="frontend/public/robots.txt">
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow:
+</file>
+
+<file path="frontend/src/components/CreateJobModal.js">
+// frontend/src/components/CreateJobModal.js
+import React, { useState } from 'react';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import axios from 'axios';
+
+const CreateJobModal = ({ indexes, teamMembers, onClose, onJobCreated, selectedDate }) => {
+    const [formData, setFormData] = useState({
+        title: '',
+        index: '',
+        startTime: selectedDate ? new Date(selectedDate) : new Date(),
+        endTime: selectedDate ? new Date(new Date(selectedDate).setHours(new Date(selectedDate).getHours() + 2)) : new Date(new Date().setHours(new Date().getHours() + 2)),
+        assignedTo: '',
+        notes: '',
+        color: '#3174ad'
+    });
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            [name]: value
+        });
+    };
+
+    const handleDateChange = (date, field) => {
+        setFormData({
+            ...formData,
+            [field]: date
+        });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        try {
+            const jobData = {
+                title: formData.title,
+                index: formData.index,
+                start_time: formData.startTime.toISOString(),
+                end_time: formData.endTime.toISOString(),
+                assigned_to: formData.assignedTo || null,
+                notes: formData.notes,
+                color: formData.color
+            };
+
+            const response = await axios.post('http://localhost:8000/api/jobs/', jobData);
+            onJobCreated(response.data);
+            onClose();
+        } catch (error) {
+            console.error('Error creating job:', error);
+            alert('Failed to create job. Please try again.');
+        }
+    };
+
+    return (
+        <Modal show={true} onHide={onClose} centered>
+            <Modal.Header closeButton>
+                <Modal.Title>Create New Job</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form onSubmit={handleSubmit}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Title</Form.Label>
+                        <Form.Control
+                            type="text"
+                            name="title"
+                            value={formData.title}
+                            onChange={handleInputChange}
+                            placeholder="Enter job title"
+                            required
+                        />
+                    </Form.Group>
+
+                    <Form.Group className="mb-3">
+                        <Form.Label>Index</Form.Label>
+                        <Form.Select
+                            name="index"
+                            value={formData.index}
+                            onChange={handleInputChange}
+                            required
+                        >
+                            <option value="">Select an index</option>
+                            {indexes.map(index => (
+                                <option key={index.id} value={index.id}>
+                                    {index.name}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
+
+                    <div className="row mb-3">
+                        <div className="col">
+                            <Form.Group>
+                                <Form.Label>Start Time</Form.Label>
+                                <DatePicker
+                                    selected={formData.startTime}
+                                    onChange={(date) => handleDateChange(date, 'startTime')}
+                                    showTimeSelect
+                                    timeFormat="HH:mm"
+                                    timeIntervals={15}
+                                    dateFormat="MMMM d, yyyy h:mm aa"
+                                    className="form-control"
+                                    required
+                                />
+                            </Form.Group>
+                        </div>
+                        <div className="col">
+                            <Form.Group>
+                                <Form.Label>End Time</Form.Label>
+                                <DatePicker
+                                    selected={formData.endTime}
+                                    onChange={(date) => handleDateChange(date, 'endTime')}
+                                    showTimeSelect
+                                    timeFormat="HH:mm"
+                                    timeIntervals={15}
+                                    dateFormat="MMMM d, yyyy h:mm aa"
+                                    className="form-control"
+                                    required
+                                />
+                            </Form.Group>
+                        </div>
+                    </div>
+
+                    <Form.Group className="mb-3">
+                        <Form.Label>Assign To</Form.Label>
+                        <Form.Select
+                            name="assignedTo"
+                            value={formData.assignedTo}
+                            onChange={handleInputChange}
+                        >
+                            <option value="">-- Unassigned --</option>
+                            {teamMembers.map(member => (
+                                <option key={member.id} value={member.id}>
+                                    {member.name}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
+
+                    <Form.Group className="mb-3">
+                        <Form.Label>Notes</Form.Label>
+                        <Form.Control
+                            as="textarea"
+                            name="notes"
+                            value={formData.notes}
+                            onChange={handleInputChange}
+                            rows={3}
+                        />
+                    </Form.Group>
+
+                    <Form.Group className="mb-3">
+                        <Form.Label>Color</Form.Label>
+                        <Form.Control
+                            type="color"
+                            name="color"
+                            value={formData.color}
+                            onChange={handleInputChange}
+                            title="Choose job color"
+                        />
+                    </Form.Group>
+
+                    <div className="d-flex justify-content-end gap-2">
+                        <Button variant="secondary" onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button variant="primary" type="submit">
+                            Create Job
+                        </Button>
+                    </div>
+                </Form>
+            </Modal.Body>
+        </Modal>
+    );
+};
+
+export default CreateJobModal;
+</file>
+
+<file path="frontend/src/components/Indexes.js">
+// frontend/src/components/Indexes.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Table, Button, Form, Modal } from 'react-bootstrap';
+
+const Indexes = () => {
+    const [indexes, setIndexes] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        description: ''
+    });
+    const [editMode, setEditMode] = useState(false);
+    const [currentId, setCurrentId] = useState(null);
+
+    // Fetch indexes on component mount
+    useEffect(() => {
+        fetchIndexes();
+    }, []);
+
+    const fetchIndexes = async () => {
+        try {
+            const response = await axios.get('http://localhost:8000/api/indexes/');
+            setIndexes(response.data);
+        } catch (error) {
+            console.error('Error fetching indexes:', error);
+        }
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            [name]: value
+        });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            if (editMode) {
+                await axios.put(`http://localhost:8000/api/indexes/${currentId}/`, formData);
+            } else {
+                await axios.post('http://localhost:8000/api/indexes/', formData);
+            }
+            fetchIndexes();
+            handleCloseModal();
+        } catch (error) {
+            console.error('Error saving index:', error);
+        }
+    };
+
+    const handleEdit = (index) => {
+        setFormData({
+            name: index.name,
+            description: index.description
+        });
+        setCurrentId(index.id);
+        setEditMode(true);
+        setShowModal(true);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this index? This will also delete all associated jobs.')) {
+            try {
+                await axios.delete(`http://localhost:8000/api/indexes/${id}/`);
+                fetchIndexes();
+            } catch (error) {
+                console.error('Error deleting index:', error);
+            }
+        }
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setFormData({ name: '', description: '' });
+        setEditMode(false);
+        setCurrentId(null);
+    };
+
+    return (
+        <div>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <h2>Indexes</h2>
+                <Button variant="primary" onClick={() => setShowModal(true)}>
+                    Add Index
+                </Button>
+            </div>
+
+            <Table striped bordered hover>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {indexes.map(index => (
+                        <tr key={index.id}>
+                            <td>{index.name}</td>
+                            <td>{index.description}</td>
+                            <td>
+                                <Button variant="outline-primary" size="sm" className="me-2" onClick={() => handleEdit(index)}>
+                                    Edit
+                                </Button>
+                                <Button variant="outline-danger" size="sm" onClick={() => handleDelete(index.id)}>
+                                    Delete
+                                </Button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </Table>
+
+            {/* Add/Edit Modal */}
+            <Modal show={showModal} onHide={handleCloseModal}>
+                <Modal.Header closeButton>
+                    <Modal.Title>{editMode ? 'Edit' : 'Add'} Index</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form onSubmit={handleSubmit}>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Name</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Description</Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                rows={3}
+                                name="description"
+                                value={formData.description}
+                                onChange={handleInputChange}
+                            />
+                        </Form.Group>
+                        <div className="d-flex justify-content-end gap-2">
+                            <Button variant="secondary" onClick={handleCloseModal}>
+                                Cancel
+                            </Button>
+                            <Button variant="primary" type="submit">
+                                Save
+                            </Button>
+                        </div>
+                    </Form>
+                </Modal.Body>
+            </Modal>
+        </div>
+    );
+};
+
+export default Indexes;
+</file>
+
+<file path="frontend/src/components/JobModal.js">
+// frontend/src/components/JobModal.js
+import React, { useState } from 'react';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
+
+const JobModal = ({ job, teamMembers, onAssign, onClose }) => {
+    const [selectedMemberId, setSelectedMemberId] = useState(job.assigned_to || '');
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onAssign(job.id, selectedMemberId || null);
+    };
+
+    return (
+        <Modal show={true} onHide={onClose} centered>
+            <Modal.Header closeButton>
+                <Modal.Title>{job.title}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <div className="mb-3">
+                    <p><strong>Index:</strong> {job.index_name}</p>
+                    <p>
+                        <strong>Time:</strong> {job.start.toLocaleString()} - {job.end.toLocaleString()}
+                    </p>
+                    {job.notes && (
+                        <p><strong>Notes:</strong> {job.notes}</p>
+                    )}
+                    <p>
+                        <strong>Currently Assigned To:</strong>{' '}
+                        {job.assigned_to_name || 'Unassigned'}
+                    </p>
+                </div>
+
+                <Form onSubmit={handleSubmit}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Assign To</Form.Label>
+                        <Form.Select
+                            value={selectedMemberId}
+                            onChange={(e) => setSelectedMemberId(e.target.value)}
+                        >
+                            <option value="">-- Unassigned --</option>
+                            {teamMembers.map(member => (
+                                <option key={member.id} value={member.id}>
+                                    {member.name}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
+
+                    <div className="d-flex justify-content-end gap-2">
+                        <Button variant="secondary" onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button variant="primary" type="submit">
+                            Save Assignment
+                        </Button>
+                    </div>
+                </Form>
+            </Modal.Body>
+        </Modal>
+    );
+};
+
+export default JobModal;
+</file>
+
+<file path="frontend/src/components/TeamMembers.js">
+// frontend/src/components/TeamMembers.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Table, Button, Form, Modal } from 'react-bootstrap';
+
+const TeamMembers = () => {
+    const [teamMembers, setTeamMembers] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: ''
+    });
+    const [editMode, setEditMode] = useState(false);
+    const [currentId, setCurrentId] = useState(null);
+
+    // Fetch team members on component mount
+    useEffect(() => {
+        fetchTeamMembers();
+    }, []);
+
+    const fetchTeamMembers = async () => {
+        try {
+            const response = await axios.get('http://localhost:8000/api/team-members/');
+            setTeamMembers(response.data);
+        } catch (error) {
+            console.error('Error fetching team members:', error);
+        }
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            [name]: value
+        });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            if (editMode) {
+                await axios.put(`http://localhost:8000/api/team-members/${currentId}/`, formData);
+            } else {
+                await axios.post('http://localhost:8000/api/team-members/', formData);
+            }
+            fetchTeamMembers();
+            handleCloseModal();
+        } catch (error) {
+            console.error('Error saving team member:', error);
+        }
+    };
+
+    const handleEdit = (member) => {
+        setFormData({
+            name: member.name,
+            email: member.email
+        });
+        setCurrentId(member.id);
+        setEditMode(true);
+        setShowModal(true);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this team member?')) {
+            try {
+                await axios.delete(`http://localhost:8000/api/team-members/${id}/`);
+                fetchTeamMembers();
+            } catch (error) {
+                console.error('Error deleting team member:', error);
+            }
+        }
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setFormData({ name: '', email: '' });
+        setEditMode(false);
+        setCurrentId(null);
+    };
+
+    return (
+        <div>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <h2>Team Members</h2>
+                <Button variant="primary" onClick={() => setShowModal(true)}>
+                    Add Team Member
+                </Button>
+            </div>
+
+            <Table striped bordered hover>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {teamMembers.map(member => (
+                        <tr key={member.id}>
+                            <td>{member.name}</td>
+                            <td>{member.email}</td>
+                            <td>
+                                <Button variant="outline-primary" size="sm" className="me-2" onClick={() => handleEdit(member)}>
+                                    Edit
+                                </Button>
+                                <Button variant="outline-danger" size="sm" onClick={() => handleDelete(member.id)}>
+                                    Delete
+                                </Button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </Table>
+
+            {/* Add/Edit Modal */}
+            <Modal show={showModal} onHide={handleCloseModal}>
+                <Modal.Header closeButton>
+                    <Modal.Title>{editMode ? 'Edit' : 'Add'} Team Member</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form onSubmit={handleSubmit}>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Name</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Email</Form.Label>
+                            <Form.Control
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </Form.Group>
+                        <div className="d-flex justify-content-end gap-2">
+                            <Button variant="secondary" onClick={handleCloseModal}>
+                                Cancel
+                            </Button>
+                            <Button variant="primary" type="submit">
+                                Save
+                            </Button>
+                        </div>
+                    </Form>
+                </Modal.Body>
+            </Modal>
+        </div>
+    );
+};
+
+export default TeamMembers;
+</file>
+
+<file path="frontend/src/App.css">
+/* frontend/src/App.css */
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  flex: 1;
+}
+
+.rbc-calendar {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  padding: 10px;
+}
+
+.rbc-toolbar button {
+  color: #495057;
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.rbc-header {
+  background-color: #f8f9fa;
+  padding: 10px 5px;
+  font-weight: bold;
+}
+
+.rbc-event {
+  border-radius: 4px;
+}
+
+.rbc-event-label {
+  font-size: 0.85em;
+}
+
+.rbc-day-slot .rbc-event {
+  border: none;
+}
+
+.rbc-month-view {
+  border-radius: 8px;
+}
+
+.rbc-row-content {
+  z-index: 1;
+}
+
+/* Custom styling for modals */
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
+</file>
+
+<file path="frontend/src/App.js">
+// frontend/src/App.js
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import CalendarView from './components/CalendarView';
+import TeamMembers from './components/TeamMembers';
+import Indexes from './components/Indexes';
+import './App.css';
+
+function App() {
+  return (
+    <Router>
+      <div className="App">
+        <Navbar />
+        <div className="container mt-4">
+          <Routes>
+            <Route path="/" element={<CalendarView />} />
+            <Route path="/team" element={<TeamMembers />} />
+            <Route path="/indexes" element={<Indexes />} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
+</file>
+
+<file path="frontend/src/App.test.js">
+import { render, screen } from '@testing-library/react';
+import App from './App';
+
+test('renders learn react link', () => {
+  render(<App />);
+  const linkElement = screen.getByText(/learn react/i);
+  expect(linkElement).toBeInTheDocument();
+});
+</file>
+
+<file path="frontend/src/index.css">
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+</file>
+
+<file path="frontend/src/index.js">
+// frontend/src/index.js
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './index.css';
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+</file>
+
+<file path="frontend/src/logo.svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 595.3"><g fill="#61DAFB"><path d="M666.3 296.5c0-32.5-40.7-63.3-103.1-82.4 14.4-63.6 8-114.2-20.2-130.4-6.5-3.8-14.1-5.6-22.4-5.6v22.3c4.6 0 8.3.9 11.4 2.6 13.6 7.8 19.5 37.5 14.9 75.7-1.1 9.4-2.9 19.3-5.1 29.4-19.6-4.8-41-8.5-63.5-10.9-13.5-18.5-27.5-35.3-41.6-50 32.6-30.3 63.2-46.9 84-46.9V78c-27.5 0-63.5 19.6-99.9 53.6-36.4-33.8-72.4-53.2-99.9-53.2v22.3c20.7 0 51.4 16.5 84 46.6-14 14.7-28 31.4-41.3 49.9-22.6 2.4-44 6.1-63.6 11-2.3-10-4-19.7-5.2-29-4.7-38.2 1.1-67.9 14.6-75.8 3-1.8 6.9-2.6 11.5-2.6V78.5c-8.4 0-16 1.8-22.6 5.6-28.1 16.2-34.4 66.7-19.9 130.1-62.2 19.2-102.7 49.9-102.7 82.3 0 32.5 40.7 63.3 103.1 82.4-14.4 63.6-8 114.2 20.2 130.4 6.5 3.8 14.1 5.6 22.5 5.6 27.5 0 63.5-19.6 99.9-53.6 36.4 33.8 72.4 53.2 99.9 53.2 8.4 0 16-1.8 22.6-5.6 28.1-16.2 34.4-66.7 19.9-130.1 62-19.1 102.5-49.9 102.5-82.3zm-130.2-66.7c-3.7 12.9-8.3 26.2-13.5 39.5-4.1-8-8.4-16-13.1-24-4.6-8-9.5-15.8-14.4-23.4 14.2 2.1 27.9 4.7 41 7.9zm-45.8 106.5c-7.8 13.5-15.8 26.3-24.1 38.2-14.9 1.3-30 2-45.2 2-15.1 0-30.2-.7-45-1.9-8.3-11.9-16.4-24.6-24.2-38-7.6-13.1-14.5-26.4-20.8-39.8 6.2-13.4 13.2-26.8 20.7-39.9 7.8-13.5 15.8-26.3 24.1-38.2 14.9-1.3 30-2 45.2-2 15.1 0 30.2.7 45 1.9 8.3 11.9 16.4 24.6 24.2 38 7.6 13.1 14.5 26.4 20.8 39.8-6.3 13.4-13.2 26.8-20.7 39.9zm32.3-13c5.4 13.4 10 26.8 13.8 39.8-13.1 3.2-26.9 5.9-41.2 8 4.9-7.7 9.8-15.6 14.4-23.7 4.6-8 8.9-16.1 13-24.1zM421.2 430c-9.3-9.6-18.6-20.3-27.8-32 9 .4 18.2.7 27.5.7 9.4 0 18.7-.2 27.8-.7-9 11.7-18.3 22.4-27.5 32zm-74.4-58.9c-14.2-2.1-27.9-4.7-41-7.9 3.7-12.9 8.3-26.2 13.5-39.5 4.1 8 8.4 16 13.1 24 4.7 8 9.5 15.8 14.4 23.4zM420.7 163c9.3 9.6 18.6 20.3 27.8 32-9-.4-18.2-.7-27.5-.7-9.4 0-18.7.2-27.8.7 9-11.7 18.3-22.4 27.5-32zm-74 58.9c-4.9 7.7-9.8 15.6-14.4 23.7-4.6 8-8.9 16-13 24-5.4-13.4-10-26.8-13.8-39.8 13.1-3.1 26.9-5.8 41.2-7.9zm-90.5 125.2c-35.4-15.1-58.3-34.9-58.3-50.6 0-15.7 22.9-35.6 58.3-50.6 8.6-3.7 18-7 27.7-10.1 5.7 19.6 13.2 40 22.5 60.9-9.2 20.8-16.6 41.1-22.2 60.6-9.9-3.1-19.3-6.5-28-10.2zM310 490c-13.6-7.8-19.5-37.5-14.9-75.7 1.1-9.4 2.9-19.3 5.1-29.4 19.6 4.8 41 8.5 63.5 10.9 13.5 18.5 27.5 35.3 41.6 50-32.6 30.3-63.2 46.9-84 46.9-4.5-.1-8.3-1-11.3-2.7zm237.2-76.2c4.7 38.2-1.1 67.9-14.6 75.8-3 1.8-6.9 2.6-11.5 2.6-20.7 0-51.4-16.5-84-46.6 14-14.7 28-31.4 41.3-49.9 22.6-2.4 44-6.1 63.6-11 2.3 10.1 4.1 19.8 5.2 29.1zm38.5-66.7c-8.6 3.7-18 7-27.7 10.1-5.7-19.6-13.2-40-22.5-60.9 9.2-20.8 16.6-41.1 22.2-60.6 9.9 3.1 19.3 6.5 28.1 10.2 35.4 15.1 58.3 34.9 58.3 50.6-.1 15.7-23 35.6-58.4 50.6zM320.8 78.4z"/><circle cx="420.9" cy="296.5" r="45.7"/><path d="M520.5 78.1z"/></g></svg>
+</file>
+
+<file path="frontend/src/reportWebVitals.js">
+const reportWebVitals = onPerfEntry => {
+  if (onPerfEntry && onPerfEntry instanceof Function) {
+    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+      getCLS(onPerfEntry);
+      getFID(onPerfEntry);
+      getFCP(onPerfEntry);
+      getLCP(onPerfEntry);
+      getTTFB(onPerfEntry);
+    });
+  }
+};
+
+export default reportWebVitals;
+</file>
+
+<file path="frontend/src/setupTests.js">
+// jest-dom adds custom jest matchers for asserting on DOM nodes.
+// allows you to do things like:
+// expect(element).toHaveTextContent(/react/i)
+// learn more: https://github.com/testing-library/jest-dom
+import '@testing-library/jest-dom';
+</file>
+
+<file path="frontend/.gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+</file>
+
+<file path="frontend/package.json">
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.3.4",
+    "bootstrap": "^5.2.3",
+    "date-fns": "^2.29.3",
+    "moment": "^2.29.4",
+    "react": "^18.2.0",
+    "react-big-calendar": "^1.6.8",
+    "react-bootstrap": "^2.7.2",
+    "react-datepicker": "^8.1.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.9.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
+</file>
+
+<file path="frontend/README.md">
+# Getting Started with Create React App
+
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+## Available Scripts
+
+In the project directory, you can run:
+
+### `npm start`
+
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+
+The page will reload when you make changes.\
+You may also see any lint errors in the console.
+
+### `npm test`
+
+Launches the test runner in the interactive watch mode.\
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+
+### `npm run build`
+
+Builds the app for production to the `build` folder.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
+
+The build is minified and the filenames include the hashes.\
+Your app is ready to be deployed!
+
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+
+### `npm run eject`
+
+**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+
+If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+
+You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+
+## Learn More
+
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+
+To learn React, check out the [React documentation](https://reactjs.org/).
+
+### Code Splitting
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+
+### Analyzing the Bundle Size
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+
+### Making a Progressive Web App
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+
+### Advanced Configuration
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+
+### Deployment
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+
+### `npm run build` fails to minify
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+</file>
+
+<file path="scheduler/migrations/0001_initial.py">
+# Generated by Django 5.1.6 on 2025-02-25 04:23
+
+import django.db.models.deletion
+from django.conf import settings
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = [
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='Index',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=100)),
+                ('description', models.TextField(blank=True)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='TeamMember',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=100)),
+                ('email', models.EmailField(max_length=254, unique=True)),
+                ('user', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Job',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('title', models.CharField(max_length=200)),
+                ('start_time', models.DateTimeField()),
+                ('end_time', models.DateTimeField()),
+                ('color', models.CharField(default='#3174ad', max_length=20)),
+                ('notes', models.TextField(blank=True)),
+                ('index', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='jobs', to='scheduler.index')),
+                ('assigned_to', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assigned_jobs', to='scheduler.teammember')),
+            ],
+        ),
+    ]
+</file>
+
+<file path="scheduler/admin.py">
+# scheduler/admin.py
+from django.contrib import admin
+from .models import Index, TeamMember, Job
+
+@admin.register(Index)
+class IndexAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description')
+    search_fields = ('name',)
+
+@admin.register(TeamMember)
+class TeamMemberAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email')
+    search_fields = ('name', 'email')
+
+@admin.register(Job)
+class JobAdmin(admin.ModelAdmin):
+    list_display = ('index', 'title', 'start_time', 'end_time', 'assigned_to')
+    list_filter = ('index', 'assigned_to', 'start_time')
+    search_fields = ('title', 'index__name', 'assigned_to__name')
+    date_hierarchy = 'start_time'
+</file>
+
+<file path="scheduler/apps.py">
+from django.apps import AppConfig
+
+
+class SchedulerConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'scheduler'
+</file>
+
+<file path="scheduler/models.py">
+# scheduler/models.py
+from django.db import models
+from django.contrib.auth.models import User
+
+class Index(models.Model):
+    """Model representing an index that needs to be calculated or maintained."""
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    
+    def __str__(self):
+        return self.name
+
+class TeamMember(models.Model):
+    """Model representing a team member."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    
+    def __str__(self):
+        return self.name
+
+class Job(models.Model):
+    """Model representing a scheduled job for an index."""
+    index = models.ForeignKey(Index, on_delete=models.CASCADE, related_name='jobs')
+    title = models.CharField(max_length=200)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    assigned_to = models.ForeignKey(
+        TeamMember, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='assigned_jobs'
+    )
+    color = models.CharField(max_length=20, default='#3174ad')  # For calendar display
+    notes = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"{self.index.name} - {self.start_time.strftime('%Y-%m-%d %H:%M')}"
+</file>
+
+<file path="scheduler/serializers.py">
+# scheduler/serializers.py
+from rest_framework import serializers
+from .models import Index, TeamMember, Job
+
+class IndexSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Index
+        fields = '__all__'
+
+class TeamMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeamMember
+        fields = '__all__'
+
+class JobSerializer(serializers.ModelSerializer):
+    index_name = serializers.CharField(source='index.name', read_only=True)
+    assigned_to_name = serializers.CharField(source='assigned_to.name', read_only=True)
+    
+    class Meta:
+        model = Job
+        fields = [
+            'id', 'index', 'index_name', 'title', 'start_time', 
+            'end_time', 'assigned_to', 'assigned_to_name', 
+            'color', 'notes'
+        ]
+</file>
+
+<file path="scheduler/tests.py">
+from django.test import TestCase
+
+# Create your tests here.
+</file>
+
+<file path="scheduler/urls.py">
+# scheduler/urls.py
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from . import views
+
+router = DefaultRouter()
+router.register(r'indexes', views.IndexViewSet)
+router.register(r'team-members', views.TeamMemberViewSet)
+router.register(r'jobs', views.JobViewSet)
+
+urlpatterns = [
+    path('', include(router.urls)),
+    path('assign-job/<int:job_id>/', views.assign_job, name='assign-job'),
+]
+</file>
+
+<file path="scheduler/views.py">
+# scheduler/views.py
+from rest_framework import viewsets
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Index, TeamMember, Job
+from .serializers import IndexSerializer, TeamMemberSerializer, JobSerializer
+
+class IndexViewSet(viewsets.ModelViewSet):
+    queryset = Index.objects.all()
+    serializer_class = IndexSerializer
+
+class TeamMemberViewSet(viewsets.ModelViewSet):
+    queryset = TeamMember.objects.all()
+    serializer_class = TeamMemberSerializer
+
+class JobViewSet(viewsets.ModelViewSet):
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer
+    
+    def get_queryset(self):
+        """Allow filtering by date range and index"""
+        queryset = Job.objects.all()
+        
+        # Filter by date range if provided
+        start = self.request.query_params.get('start')
+        end = self.request.query_params.get('end')
+        
+        if start:
+            queryset = queryset.filter(start_time__gte=start)
+        if end:
+            queryset = queryset.filter(end_time__lte=end)
+            
+        # Filter by index if provided
+        index_id = self.request.query_params.get('index_id')
+        if index_id:
+            queryset = queryset.filter(index_id=index_id)
+            
+        return queryset
+
+@api_view(['PUT'])
+def assign_job(request, job_id):
+    """API endpoint to assign a job to a team member"""
+    try:
+        job = Job.objects.get(pk=job_id)
+        member_id = request.data.get('team_member_id')
+        
+        if member_id:
+            team_member = TeamMember.objects.get(pk=member_id)
+            job.assigned_to = team_member
+        else:
+            # If no member_id is provided, unassign the job
+            job.assigned_to = None
+            
+        job.save()
+        return Response(JobSerializer(job).data)
+        
+    except (Job.DoesNotExist, TeamMember.DoesNotExist):
+        return Response({"error": "Job or Team Member not found"}, status=404)
+</file>
+
+<file path=".gitignore">
+backend/venv
+venv
+</file>
+
+<file path="load_sample_data.py">
+# load_sample_data.py - place this file in the project root directory (same level as manage.py)
+import os
+import django
+from datetime import datetime, timedelta
+import random
+
+# Set up Django environment
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+django.setup()
+
+from django.contrib.auth.models import User
+from scheduler.models import Index, TeamMember, Job
+
+def create_sample_data():
+    # Create superuser for admin access
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser('admin', 'admin@example.com', 'adminpassword')
+        print("Created admin user")
+    
+    # Create indexes
+    indexes = [
+        {"name": "Market Index", "description": "Weekly market performance index calculation"},
+        {"name": "Customer Satisfaction", "description": "Monthly customer satisfaction index"},
+        {"name": "Product Quality", "description": "Weekly product quality metrics"},
+        {"name": "Supply Chain", "description": "Bi-weekly supply chain efficiency index"},
+        {"name": "Employee Engagement", "description": "Quarterly employee engagement metrics"}
+    ]
+    
+    for index_data in indexes:
+        Index.objects.get_or_create(
+            name=index_data["name"],
+            defaults={"description": index_data["description"]}
+        )
+    
+    # Create team members
+    team_members = [
+        {"name": "John Doe", "email": "john@example.com"},
+        {"name": "Jane Smith", "email": "jane@example.com"},
+        {"name": "Michael Johnson", "email": "michael@example.com"},
+        {"name": "Sarah Williams", "email": "sarah@example.com"},
+        {"name": "Robert Brown", "email": "robert@example.com"}
+    ]
+    
+    for member_data in team_members:
+        TeamMember.objects.get_or_create(
+            email=member_data["email"],
+            defaults={"name": member_data["name"]}
+        )
+    
+    # Get created objects
+    all_indexes = list(Index.objects.all())
+    all_members = list(TeamMember.objects.all())
+    
+    # Define colors for different indexes
+    colors = ['#3174ad', '#ff6b6b', '#5cb85c', '#f0ad4e', '#9467bd']
+    
+    # Create jobs for the next 30 days
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    job_count = 0
+    
+    # Delete existing jobs to avoid duplication when running script multiple times
+    Job.objects.all().delete()
+    
+    for day in range(30):
+        current_date = today + timedelta(days=day)
+        
+        # Weekly indexes on Mondays
+        if current_date.weekday() == 0:  # Monday
+            for i, index in enumerate([all_indexes[0], all_indexes[2]]):
+                start = current_date + timedelta(hours=9 + i*2)
+                end = start + timedelta(hours=2)
+                
+                Job.objects.create(
+                    index=index,
+                    title=f"{index.name} Calculation",
+                    start_time=start,
+                    end_time=end,
+                    assigned_to=random.choice(all_members) if random.random() > 0.3 else None,
+                    color=colors[i % len(colors)],
+                    notes=f"Regular weekly calculation for {index.name}"
+                )
+                job_count += 1
+        
+        # Bi-weekly supply chain index (every other Thursday)
+        if current_date.weekday() == 3 and (day // 7) % 2 == 0:  # Thursday, every other week
+            start = current_date + timedelta(hours=13)
+            end = start + timedelta(hours=3)
+            
+            Job.objects.create(
+                index=all_indexes[3],
+                title=f"{all_indexes[3].name} Analysis",
+                start_time=start,
+                end_time=end,
+                assigned_to=random.choice(all_members) if random.random() > 0.3 else None,
+                color=colors[3 % len(colors)],
+                notes=f"Bi-weekly analysis for {all_indexes[3].name}"
+            )
+            job_count += 1
+        
+        # Monthly customer satisfaction index (1st of month)
+        if current_date.day == 1:
+            start = current_date + timedelta(hours=10)
+            end = start + timedelta(hours=4)
+            
+            Job.objects.create(
+                index=all_indexes[1],
+                title=f"Monthly {all_indexes[1].name} Review",
+                start_time=start,
+                end_time=end,
+                assigned_to=random.choice(all_members) if random.random() > 0.3 else None,
+                color=colors[1 % len(colors)],
+                notes=f"Monthly review for {all_indexes[1].name}"
+            )
+            job_count += 1
+        
+        # Quarterly employee engagement (first Monday of quarter)
+        if current_date.day <= 7 and current_date.weekday() == 0 and current_date.month in [1, 4, 7, 10]:
+            start = current_date + timedelta(hours=14)
+            end = start + timedelta(hours=3)
+            
+            Job.objects.create(
+                index=all_indexes[4],
+                title=f"Quarterly {all_indexes[4].name}",
+                start_time=start,
+                end_time=end,
+                assigned_to=random.choice(all_members) if random.random() > 0.3 else None,
+                color=colors[4 % len(colors)],
+                notes=f"Quarterly analysis for {all_indexes[4].name}"
+            )
+            job_count += 1
+    
+    print(f"Created {len(indexes)} indexes, {len(team_members)} team members, and {job_count} jobs")
+
+if __name__ == "__main__":
+    create_sample_data()
+</file>
+
+<file path="manage.py">
+#!/usr/bin/env python
+"""Django's command-line utility for administrative tasks."""
+import os
+import sys
+
+
+def main():
+    """Run administrative tasks."""
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed and "
+            "available on your PYTHONPATH environment variable? Did you "
+            "forget to activate a virtual environment?"
+        ) from exc
+    execute_from_command_line(sys.argv)
+
+
+if __name__ == '__main__':
+    main()
+</file>
+
+<file path="README.md">
+# Job Scheduler Application
+
+A team job scheduler application built with Django (backend) and React (frontend). The application allows teams to manage indexes that need to be calculated/maintained on specific dates and assign team members to these jobs.
+
+## Features
+
+- Calendar view showing scheduled jobs with month/week/day views
+- Job creation and management
+- Team member assignment
+- Index management
+- Color-coded job visualization
+
+## Setup Instructions
+
+### Prerequisites
+
+- Python 3.8+
+- Node.js 14+
+- npm or yarn
+
+### Backend Setup
+
+1. Clone the repository and navigate to the project directory:
+
+   ```bash
+   git clone <repository-url>
+   cd job_scheduler
+   ```
+
+2. Create and activate a virtual environment:
+
+   ```bash
+   # On macOS/Linux
+   python -m venv venv
+   source venv/bin/activate
+
+   # On Windows
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+
+3. Install the required Python packages:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Run database migrations:
+
+   ```bash
+   python manage.py makemigrations scheduler
+   python manage.py migrate
+   ```
+
+5. (Optional) Load sample data:
+
+   ```bash
+   # For general sample data over the next 30 days
+   python load_sample_data.py
+
+   # Or for data specifically for the current week
+   python this_week_data.py
+   ```
+
+6. Start the Django development server:
+   ```bash
+   python manage.py runserver
+   ```
+   The backend will be running at http://localhost:8000/
+
+### Frontend Setup
+
+1. Open a new terminal window, navigate to the frontend directory:
+
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Start the React development server:
+   ```bash
+   npm start
+   ```
+   The frontend will be running at http://localhost:3000/
+
+## Usage
+
+### Accessing the Application
+
+- **Main Application**: http://localhost:3000/
+- **Django Admin Panel**: http://localhost:8000/admin/
+  - Username: admin
+  - Password: adminpassword (if using sample data)
+
+### Creating Jobs
+
+1. Click on "Add New Job" button in the calendar view
+2. Fill in the job details:
+   - Title
+   - Select an index
+   - Set start and end times
+   - Assign to a team member (optional)
+   - Add notes (optional)
+   - Choose a color
+3. Click "Create Job"
+
+### Assigning Team Members
+
+1. Click on a job in the calendar
+2. Select a team member from the dropdown
+3. Click "Save Assignment"
+
+### Managing Team Members and Indexes
+
+Use the respective tabs in the navigation bar to add, edit, or delete team members and indexes.
+
+## Project Structure
+
+```
+job_scheduler/
+├── backend/              # Django project settings
+│   ├── settings.py
+│   ├── urls.py
+│   └── ...
+├── scheduler/            # Django app for job scheduling
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   └── ...
+├── frontend/             # React frontend application
+│   ├── src/
+│   │   ├── components/   # React components
+│   │   └── ...
+│   └── ...
+├── manage.py             # Django management script
+├── requirements.txt      # Python dependencies
+├── load_sample_data.py   # Script to load sample data
+└── this_week_data.py     # Script to load data for current week
+```
+
+## Creating requirements.txt
+
+If you make changes to the backend and need to update the requirements.txt file:
+
+```bash
+# Activate your virtual environment
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Generate the requirements.txt file
+pip freeze > requirements.txt
+```
+
+## Development Notes
+
+- The backend uses Django REST Framework to provide a RESTful API
+- CORS is enabled in development mode for all origins (restrict this in production)
+- The frontend uses react-big-calendar for the calendar view
+- Sample data scripts can be modified to create custom job patterns
+
+## Troubleshooting
+
+### Backend Issues
+
+- **Database migration errors**: Delete the db.sqlite3 file and migration files in scheduler/migrations/ (except **init**.py), then run migrations again.
+- **ModuleNotFoundError**: Make sure you're running commands from the project root and the virtual environment is activated.
+
+### Frontend Issues
+
+- **Module not found errors**: Make sure all dependencies are installed with `npm install`.
+- **API connection errors**: Verify the backend server is running and accessible.
+
+## Production Deployment
+
+For production deployment:
+
+1. Set `DEBUG = False` in backend/settings.py
+2. Configure a proper database (PostgreSQL recommended)
+3. Set up proper CORS settings in backend/settings.py
+4. Build the React app with `npm run build` and serve it with a web server
+5. Configure a WSGI server (like Gunicorn) for Django
+6. Set up a reverse proxy (like Nginx) in front of everything
+</file>
+
+<file path="requirements.txt">
+Django==4.2.0
+djangorestframework==3.14.0
+django-cors-headers==3.14.0
+python-dateutil==2.8.2
+pytz==2023.3
+</file>
+
+<file path="this_week_data.py">
+# this_week_data.py - place this file in the project root directory (same level as manage.py)
+import os
+import django
+from datetime import datetime, timedelta
+import random
+
+# Set up Django environment
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+django.setup()
+
+from django.contrib.auth.models import User
+from scheduler.models import Index, TeamMember, Job
+
+def create_this_week_data():
+    # Check if data already exists
+    if Job.objects.count() > 0:
+        print("Jobs already exist. Clearing existing jobs...")
+        Job.objects.all().delete()
+    
+    # Make sure indexes and team members exist
+    if Index.objects.count() == 0 or TeamMember.objects.count() == 0:
+        create_base_data()
+    
+    # Get all indexes and members
+    all_indexes = list(Index.objects.all())
+    all_members = list(TeamMember.objects.all())
+    
+    # Define colors for different indexes
+    colors = ['#3174ad', '#ff6b6b', '#5cb85c', '#f0ad4e', '#9467bd']
+    
+    # Calculate this week's date range
+    today = datetime.now()
+    start_of_week = today - timedelta(days=today.weekday())  # Monday
+    start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    job_count = 0
+    
+    # Create jobs for each day of this week
+    for day in range(7):  # Monday to Sunday
+        current_date = start_of_week + timedelta(days=day)
+        
+        # Day name for readable output
+        day_name = current_date.strftime('%A')
+        
+        # Morning index calculation (9 AM)
+        morning_index = random.choice(all_indexes)
+        morning_start = current_date + timedelta(hours=9)
+        morning_end = morning_start + timedelta(hours=2)
+        
+        # Create the morning job
+        Job.objects.create(
+            index=morning_index,
+            title=f"{morning_index.name} Morning Update",
+            start_time=morning_start,
+            end_time=morning_end,
+            assigned_to=random.choice(all_members) if random.random() > 0.3 else None,
+            color=colors[all_indexes.index(morning_index) % len(colors)],
+            notes=f"{day_name} morning {morning_index.name} calculation"
+        )
+        job_count += 1
+        
+        # Afternoon index calculation (2 PM)
+        afternoon_index = random.choice([idx for idx in all_indexes if idx != morning_index])
+        afternoon_start = current_date + timedelta(hours=14)
+        afternoon_end = afternoon_start + timedelta(hours=2)
+        
+        # Create the afternoon job
+        Job.objects.create(
+            index=afternoon_index,
+            title=f"{afternoon_index.name} Afternoon Review",
+            start_time=afternoon_start,
+            end_time=afternoon_end,
+            assigned_to=random.choice(all_members) if random.random() > 0.3 else None,
+            color=colors[all_indexes.index(afternoon_index) % len(colors)],
+            notes=f"{day_name} afternoon {afternoon_index.name} review"
+        )
+        job_count += 1
+        
+        # Add an extra job on Wednesday (team meeting)
+        if day == 2:  # Wednesday
+            meeting_start = current_date + timedelta(hours=11)
+            meeting_end = meeting_start + timedelta(hours=1)
+            
+            Job.objects.create(
+                index=all_indexes[0],  # Use first index
+                title="Team Coordination Meeting",
+                start_time=meeting_start,
+                end_time=meeting_end,
+                assigned_to=None,  # All team members attend
+                color="#8a2be2",  # Different color for meetings
+                notes="Weekly team coordination meeting"
+            )
+            job_count += 1
+    
+    print(f"Created {job_count} jobs for this week (from {start_of_week.strftime('%Y-%m-%d')} to {(start_of_week + timedelta(days=6)).strftime('%Y-%m-%d')})")
+
+def create_base_data():
+    # Create admin user if not exists
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser('admin', 'admin@example.com', 'adminpassword')
+        print("Created admin user")
+    
+    # Create indexes
+    indexes = [
+        {"name": "Market Index", "description": "Weekly market performance index calculation"},
+        {"name": "Customer Satisfaction", "description": "Monthly customer satisfaction index"},
+        {"name": "Product Quality", "description": "Weekly product quality metrics"},
+        {"name": "Supply Chain", "description": "Bi-weekly supply chain efficiency index"},
+        {"name": "Employee Engagement", "description": "Quarterly employee engagement metrics"}
+    ]
+    
+    for index_data in indexes:
+        Index.objects.get_or_create(
+            name=index_data["name"],
+            defaults={"description": index_data["description"]}
+        )
+    
+    # Create team members
+    team_members = [
+        {"name": "John Doe", "email": "john@example.com"},
+        {"name": "Jane Smith", "email": "jane@example.com"},
+        {"name": "Michael Johnson", "email": "michael@example.com"},
+        {"name": "Sarah Williams", "email": "sarah@example.com"},
+        {"name": "Robert Brown", "email": "robert@example.com"}
+    ]
+    
+    for member_data in team_members:
+        TeamMember.objects.get_or_create(
+            email=member_data["email"],
+            defaults={"name": member_data["name"]}
+        )
+    
+    print(f"Created {len(indexes)} indexes and {len(team_members)} team members")
+
+if __name__ == "__main__":
+    create_this_week_data()
+</file>
+
+<file path="frontend/public/index.html">
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Application to view rebalance calendar - Dallas"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>Rebalance Job Scheduler</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a t emplate.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>
+</file>
+
+<file path="frontend/src/components/CalendarView.js">
+// frontend/src/components/CalendarView.js
+import React, { useState, useEffect } from 'react';
+import { Calendar, momentLocalizer } from 'react-big-calendar';
+import moment from 'moment';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import axios from 'axios';
+import JobModal from './JobModal';
+import CreateJobModal from './CreateJobModal';
+import Button from 'react-bootstrap/Button';
+
+const localizer = momentLocalizer(moment);
+
+const CalendarView = () => {
+    const [jobs, setJobs] = useState([]);
+    const [selectedJob, setSelectedJob] = useState(null);
+    const [teamMembers, setTeamMembers] = useState([]);
+    const [indexes, setIndexes] = useState([]);
+    const [viewType, setViewType] = useState('month');
+    const [modalOpen, setModalOpen] = useState(false);
+    const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(null);
+
+    // Fetch jobs, team members, and indexes on component mount
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        try {
+            const [jobsResponse, membersResponse, indexesResponse] = await Promise.all([
+                axios.get('http://localhost:8000/api/jobs/'),
+                axios.get('http://localhost:8000/api/team-members/'),
+                axios.get('http://localhost:8000/api/indexes/')
+            ]);
+
+            // Format job data for the calendar
+            const formattedJobs = jobsResponse.data.map(job => ({
+                id: job.id,
+                title: job.title,
+                start: new Date(job.start_time),
+                end: new Date(job.end_time),
+                index: job.index,
+                index_name: job.index_name,
+                assigned_to: job.assigned_to,
+                assigned_to_name: job.assigned_to_name,
+                color: job.color,
+                notes: job.notes,
+            }));
+
+            setJobs(formattedJobs);
+            setTeamMembers(membersResponse.data);
+            setIndexes(indexesResponse.data);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+
+    // Handle event click (job selection)
+    const handleSelectEvent = (event) => {
+        setSelectedJob(event);
+        setModalOpen(true);
+    };
+
+    // Handle slot selection (for creating new jobs)
+    const handleSelectSlot = (slotInfo) => {
+        setSelectedDate(slotInfo.start);
+        setCreateModalOpen(true);
+    };
+
+    // Handle job assignment update
+    const handleAssignJob = async (jobId, teamMemberId) => {
+        try {
+            const response = await axios.put(`http://localhost:8000/api/assign-job/${jobId}/`, {
+                team_member_id: teamMemberId
+            });
+
+            // Update the jobs state with the updated job
+            setJobs(prevJobs =>
+                prevJobs.map(job =>
+                    job.id === jobId
+                        ? {
+                            ...job,
+                            assigned_to: response.data.assigned_to,
+                            assigned_to_name: response.data.assigned_to_name
+                        }
+                        : job
+                )
+            );
+
+            // Close the modal
+            setModalOpen(false);
+        } catch (error) {
+            console.error('Error assigning job:', error);
+        }
+    };
+
+    // Handle new job creation
+    const handleJobCreated = (newJob) => {
+        const formattedJob = {
+            id: newJob.id,
+            title: newJob.title,
+            start: new Date(newJob.start_time),
+            end: new Date(newJob.end_time),
+            index: newJob.index,
+            index_name: newJob.index_name,
+            assigned_to: newJob.assigned_to,
+            assigned_to_name: newJob.assigned_to_name,
+            color: newJob.color,
+            notes: newJob.notes,
+        };
+
+        setJobs([...jobs, formattedJob]);
+    };
+
+    // Custom event styling
+    const eventStyleGetter = (event) => {
+        const style = {
+            backgroundColor: event.color || '#3174ad',
+            borderRadius: '4px',
+            opacity: 0.8,
+            color: 'white',
+            border: '0px',
+            display: 'block',
+            fontWeight: 'bold'
+        };
+        return {
+            style
+        };
+    };
+
+    return (
+        <div>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <h2>Rebalance Calendar - Dallas</h2>
+                <div className="d-flex gap-2">
+                    <Button variant="success" onClick={() => setCreateModalOpen(true)}>
+                        Add New Job
+                    </Button>
+                    <div className="btn-group">
+                        <button
+                            className={`btn ${viewType === 'month' ? 'btn-primary' : 'btn-outline-primary'}`}
+                            onClick={() => setViewType('month')}
+                        >
+                            Month
+                        </button>
+                        <button
+                            className={`btn ${viewType === 'week' ? 'btn-primary' : 'btn-outline-primary'}`}
+                            onClick={() => setViewType('week')}
+                        >
+                            Week
+                        </button>
+                        <button
+                            className={`btn ${viewType === 'day' ? 'btn-primary' : 'btn-outline-primary'}`}
+                            onClick={() => setViewType('day')}
+                        >
+                            Day
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div style={{ height: 800 }}>
+                <Calendar
+                    localizer={localizer}
+                    events={jobs}
+                    startAccessor="start"
+                    endAccessor="end"
+                    style={{ height: '100%' }}
+                    eventPropGetter={eventStyleGetter}
+                    onSelectEvent={handleSelectEvent}
+                    onSelectSlot={handleSelectSlot}
+                    selectable={true}
+                    view={viewType}
+                    onView={setViewType}
+                    views={['month', 'week', 'day']}
+                />
+            </div>
+
+            {modalOpen && (
+                <JobModal
+                    job={selectedJob}
+                    teamMembers={teamMembers}
+                    onAssign={handleAssignJob}
+                    onClose={() => setModalOpen(false)}
+                />
+            )}
+
+            {createModalOpen && (
+                <CreateJobModal
+                    indexes={indexes}
+                    teamMembers={teamMembers}
+                    selectedDate={selectedDate}
+                    onClose={() => {
+                        setCreateModalOpen(false);
+                        setSelectedDate(null);
+                    }}
+                    onJobCreated={handleJobCreated}
+                />
+            )}
+        </div>
+    );
+};
+
+export default CalendarView;
+</file>
+
+<file path="frontend/src/components/Navbar.js">
+// frontend/src/components/Navbar.js
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const Navbar = () => {
+    return (
+        <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div className="container">
+                <Link className="navbar-brand" to="/">Rebalance Job Scheduler</Link>
+                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span className="navbar-toggler-icon"></span>
+                </button>
+                <div className="collapse navbar-collapse" id="navbarNav">
+                    <ul className="navbar-nav">
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/">Calendar</Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/team">Team Members</Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/indexes">Indexes</Link>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    );
+};
+
+export default Navbar;
+</file>
+
+</files>
